@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heat & Matter: Modeling Temperature and Heat</title>
+<style>
+:root{--ink:#183047;--muted:#53687b;--paper:#f5f8fb;--blue:#2d86c9;--orange:#e67e22;--line:#d8e3ed;--green:#1f8a70}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}
+main{max-width:1100px;margin:auto;padding:20px}.hero{background:linear-gradient(120deg,#173b58,#236c91);color:white;padding:24px;border-radius:18px;margin-bottom:16px}
+.hero h1{margin:0 0 8px;font-size:clamp(1.5rem,3vw,2.2rem)}.hero p{margin:0;line-height:1.5;max-width:800px}
+.pill{display:inline-block;background:#ffffff24;border:1px solid #ffffff55;border-radius:999px;padding:5px 10px;font-size:.8rem;margin-bottom:10px}
+.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:16px}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 4px 16px #193b5210}
+h2{font-size:1.15rem;margin:0 0 12px}h3{font-size:1rem;margin:14px 0 8px}p{line-height:1.5}.simhead{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.status{font-weight:bold;color:var(--green);font-size:.9rem}
+canvas{display:block;width:100%;height:auto;background:#f8fbfe;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}.control{background:#f6f9fc;padding:10px;border-radius:10px}.control label{display:flex;justify-content:space-between;gap:8px;font-weight:bold;font-size:.9rem;margin-bottom:7px}.control input{width:100%;accent-color:var(--blue)}.small{font-size:.82rem;color:var(--muted);line-height:1.4}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:10px;padding:10px 14px;background:#176b96;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#e8f0f6;color:var(--ink)}button:focus,input:focus,textarea:focus{outline:3px solid #f6bd60;outline-offset:2px}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.metric{padding:10px;background:#f2f7fa;border-radius:10px}.metric strong{display:block;font-size:1.25rem;margin-top:4px}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.note{background:#fff7e8;border-left:4px solid #e7a23b;padding:10px 12px;border-radius:8px;font-size:.88rem;line-height:1.45;margin-top:12px}
+section.full{margin-top:16px}.question{padding:12px 0;border-top:1px solid var(--line)}.question:first-of-type{border-top:0}.question label{font-weight:bold;display:block;margin-bottom:7px}.question textarea{width:100%;min-height:76px;resize:vertical;border:1px solid #b9cbd9;border-radius:9px;padding:10px;font:inherit}
+.checkrow{display:flex;gap:8px;align-items:flex-start;margin:9px 0}.checkrow input{margin-top:4px;accent-color:var(--green)}.feedback{font-weight:bold;margin-top:8px}.footer{font-size:.8rem;color:var(--muted);text-align:center;padding:18px}
+@media(max-width:760px){main{padding:10px}.layout{grid-template-columns:1fr}.controls{grid-template-columns:1fr 1fr}.hero{padding:18px}}@media(max-width:420px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<div class="pill">GRADE 7 • PHYSICAL SCIENCE • INTERACTIVE LAB</div>
+<h1>Heat & Matter: Modeling Temperature and Heat</h1>
+<p>Use the moving BB model to investigate how thermal energy transfers between a warmer object and a cooler object. Observe the model before, during, and after energy transfer, then record your evidence and conclusions.</p>
+</header>
+<div class="layout">
+<div class="panel">
+<div class="simhead"><h2>1. Explore the model</h2><span id="status" class="status" aria-live="polite">Ready to explore</span></div>
+<canvas id="scene" width="760" height="410" aria-label="Animated model showing BB particles in a warm plate and a cool water bottle"></canvas>
+<div class="legend"><span><i class="dot" style="background:#e67e22"></i>Warmer object / higher average particle energy</span><span><i class="dot" style="background:#2d86c9"></i>Cooler object / lower average particle energy</span><span>↔ Particle motion and collisions represent energy transfer</span></div>
+<div class="controls" style="margin-top:14px">
+<div class="control"><label for="warm">Warm object temperature <output id="warmOut">80°C</output></label><input id="warm" type="range" min="30" max="100" value="80"><div class="small">Adjust the starting temperature of the plate.</div></div>
+<div class="control"><label for="cool">Cool object temperature <output id="coolOut">20°C</output></label><input id="cool" type="range" min="0" max="70" value="20"><div class="small">Adjust the starting temperature of the bottle.</div></div>
+<div class="control"><label for="count">Number of BBs <output id="countOut">12</output></label><input id="count" type="range" min="4" max="24" step="2" value="12"><div class="small">Change the number of particles in each object.</div></div>
+<div class="control"><label for="rate">Transfer rate <output id="rateOut">Medium</output></label><input id="rate" type="range" min="1" max="5" value="3"><div class="small">Control how quickly the model moves toward equilibrium.</div></div>
+</div>
+<div class="buttons"><button id="play">▶ Start heat transfer</button><button id="step" class="secondary">Step forward</button><button id="reset" class="secondary">Reset model</button></div>
+<div class="metrics">
+<div class="metric"><span class="small">Warm object (model)</span><strong id="warmMetric">80°C</strong></div>
+<div class="metric"><span class="small">Cool object (model)</span><strong id="coolMetric">20°C</strong></div>
+<div class="metric"><span class="small">Temperature difference</span><strong id="diffMetric">60°C</strong></div>
+<div class="metric"><span class="small">Energy transfer direction</span><strong id="directionMetric" style="font-size:1rem">Warm → Cool</strong></div>
+</div>
+<div class="note"><strong>Model reminder:</strong> The colored BBs and their motion are a simplified representation. The animation is not a literal picture of heat or of the particles inside every real object.</div>
+</div>
+<aside class="panel">
+<h2>2. Your investigation</h2>
+<p class="small">Follow the same sequence you would use during an in-person lab. Pause and observe the model at each stage.</p>
+<h3>Before heat transfer</h3>
+<div class="checkrow"><input type="checkbox" id="before1"><label for="before1">I observed the starting temperatures.</label></div>
+<div class="checkrow"><input type="checkbox" id="before2"><label for="before2">I compared the motion of BBs in the two objects.</label></div>
+<h3>During heat transfer</h3>
+<div class="checkrow"><input type="checkbox" id="during1"><label for="during1">I started the animation and watched the temperatures change.</label></div>
+<div class="checkrow"><input type="checkbox" id="during2"><label for="during2">I identified the direction of energy transfer.</label></div>
+<h3>After heat transfer</h3>
+<div class="checkrow"><input type="checkbox" id="after1"><label for="after1">I observed whether the temperatures moved closer together.</label></div>
+<div class="checkrow"><input type="checkbox" id="after2"><label for="after2">I used observations from the model to support my conclusions.</label></div>
+<div class="note">Try changing the starting temperatures and running the model again. What changes? What stays the same?</div>
+<div class="buttons"><button id="observe" class="secondary">Record observation snapshot</button></div>
+<p id="snapshot" class="small" aria-live="polite">No snapshot recorded yet.</p>
+</aside>
+</div>
+<section class="panel full">
+<h2>3. Observations and conclusions</h2>
+<p>Use evidence from your simulation. You can save or print your responses when you finish.</p>
+<div class="question"><label for="obsBefore">Observation: Before heat transfer — What do you notice about the BB motion and the temperatures?</label><textarea id="obsBefore" placeholder="I observed that..."></textarea></div>
+<div class="question"><label for="obsDuring">Observation: During heat transfer — What changes in the model? Which way does energy transfer?</label><textarea id="obsDuring" placeholder="During the simulation..."></textarea></div>
+<div class="question"><label for="q1">Conclusion 1: Describe the difference between heat and temperature using this model to explain.</label><textarea id="q1" placeholder="Temperature describes... Heat is... In this model..."></textarea></div>
+<div class="question"><label for="q2">Conclusion 2: How can you change the model to show more or less thermal energy?</label><textarea id="q2" placeholder="I can change... because..."></textarea></div>
+<div class="question"><label for="q3">Conclusion 3: Describe one limitation of the model (one way it does not represent temperature, heat, or thermal energy very well).</label><textarea id="q3" placeholder="One limitation is..."></textarea></div>
+<div class="buttons"><button id="save">Save / print my lab</button><button id="clear" class="secondary">Clear written answers</button><span id="saveMsg" class="small" aria-live="polite"></span></div>
+</section>
+<section class="panel full">
+<h2>4. Check your understanding</h2>
+<p>Choose the best answer for each question, then check your responses.</p>
+<div class="question"><label for="mc1">When two objects at different temperatures interact, thermal energy transfers overall...</label><select id="mc1"><option value="">Choose an answer</option><option value="a">from the cooler object to the warmer object</option><option value="b">from the warmer object to the cooler object</option><option value="c">only when both objects are the same temperature</option></select></div>
+<div class="question"><label for="mc2">In this model, faster BB motion represents...</label><select id="mc2"><option value="">Choose an answer</option><option value="a">a higher temperature in the simplified model</option><option value="b">the object becoming smaller</option><option value="c">less particle energy</option></select></div>
+<div class="question"><label for="mc3">What is one limitation of the BB model?</label><select id="mc3"><option value="">Choose an answer</option><option value="a">It shows the exact path of every particle in a real object.</option><option value="b">It is a simplified representation and does not show all real particle interactions.</option><option value="c">It proves heat and temperature mean the same thing.</option></select></div>
+<div class="buttons"><button id="check">Check answers</button></div><p id="quizFeedback" class="feedback" aria-live="polite"></p>
+</section>
+<div class="footer">Virtual lab • Modeling Temperature and Heat • Use your observations as evidence.</div>
+</main>
+<script>
+(function(){
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let running=false, frame=0, warmStart=80,coolStart=20,warmT=80,coolT=20,particles=[],snapshotCount=0;
+function settings(){warmStart=+$('warm').value;coolStart=+$('cool').value;if(coolStart>=warmStart){coolStart=Math.max(0,warmStart-5);$('cool').value=coolStart;}warmT=warmStart;coolT=coolStart;updateLabels();makeParticles();draw();$('status').textContent='Ready to explore';}
+function updateLabels(){
+$('warmOut').textContent=warmStart+'°C';$('coolOut').textContent=coolStart+'°C';$('countOut').textContent=$('count').value;
+$('rateOut').textContent=['','Very slow','Slow','Medium','Fast','Very fast'][$('rate').value];
+$('warmMetric').textContent=Math.round(warmT)+'°C';$('coolMetric').textContent=Math.round(coolT)+'°C';
+$('diffMetric').textContent=Math.round(Math.abs(warmT-coolT))+'°C';
+$('directionMetric').textContent=Math.abs(warmT-coolT)<1?'Nearly balanced':(warmT>coolT?'Warm → Cool':'Cool → Warm');
+}
+function makeParticles(){particles=[];let n=+$('count').value;for(let i=0;i<n;i++){particles.push({x:90+Math.random()*250,y:130+Math.random()*155,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,side:0,r:5+Math.random()*3});particles.push({x:440+Math.random()*235,y:130+Math.random()*155,vx:(Math.random()-.5),vy:(Math.random()-.5),side:1,r:5+Math.random()*3});}}
+function rounded(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+function draw(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle='#f8fbfe';ctx.fillRect(0,0,760,410);
+ctx.fillStyle='#183047';ctx.font='bold 19px Arial';ctx.fillText('WARM PLATE',105,42);ctx.fillText('COOL WATER BOTTLE',440,42);
+ctx.fillStyle='#62798b';ctx.font='14px Arial';ctx.fillText('Before: higher temperature',90,65);ctx.fillText('Before: lower temperature',440,65);
+rounded(65,85,300,245,'18', '#fce9d9','#e67e22');rounded(415,85,285,245,'18','#dff1fb','#2d86c9');
+rounded(88,108,254,198,'12','#fff7f0','#efc6a3');rounded(438,108,239,198,'12','#f4fbff','#b1d8ed');
+for(const p of particles){
+let temp=p.side===0?warmT:coolT;
+let speedScale=.4+temp/42;
+let color=p.side===0?'#e67e22':'#2d86c9';
+ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-p.vx*3*speedScale,p.y-p.vy*3*speedScale);ctx.strokeStyle=color+'99';ctx.lineWidth=2;ctx.stroke();
+}
+ctx.fillStyle='#183047';ctx.font='bold 16px Arial';ctx.fillText('Model temperature: '+Math.round(warmT)+'°C',92,358);ctx.fillText('Model temperature: '+Math.round(coolT)+'°C',438,358);
+if(running){
+ctx.strokeStyle='#1f8a70';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(365,205);ctx.lineTo(405,205);ctx.stroke();ctx.beginPath();ctx.moveTo(396,196);ctx.lineTo(406,205);ctx.lineTo(396,214);ctx.stroke();
+ctx.fillStyle='#1f8a70';ctx.font='bold 12px Arial';ctx.fillText('ENERGY',365,188);
+}
+ctx.fillStyle='#53687b';ctx.font='13px Arial';ctx.fillText('Illustrative model — not to scale',255,394);
+}
+function animate(){
+if(!running)return;
+frame++;
+let gap=warmT-coolT,rate=+$('rate').value;
+if(Math.abs(gap)>.6){let change=Math.sign(gap)*Math.min(Math.abs(gap)*.008*rate,.9);warmT-=change;coolT+=change*.82;}
+particles.forEach(p=>{let t=p.side===0?warmT:coolT, speed=.35+t/55;p.x+=p.vx*speed;p.y+=p.vy*speed;
+if(p.x<90||p.x>(p.side===0?342:677)){p.vx*=-1;p.x=Math.max(90,Math.min(p.x,p.side===0?342:677));}
+if(p.y<110||p.y>304){p.vy*=-1;p.y=Math.max(110,Math.min(p.y,304));}
+if(Math.random()<.025){p.vx+=(Math.random()-.5)*.7;p.vy+=(Math.random()-.5)*.7;p.vx=Math.max(-1.5,Math.min(1.5,p.vx));p.vy=Math.max(-1.5,Math.min(1.5,p.vy));}
+});
+updateLabels();draw();
+if(Math.abs(warmT-coolT)<1){running=false;$('play').textContent='▶ Start heat transfer';$('status').textContent='Temperatures nearly balanced';}
+if(running)requestAnimationFrame(animate);
+}
+function start(){if(running){running=false;$('play').textContent='▶ Resume heat transfer';$('status').textContent='Paused';return;}running=true;$('play').textContent='Ⅱ Pause';$('status').textContent='Heat transfer in progress';animate();}
+$('play').addEventListener('click',start);
+$('step').addEventListener('click',()=>{running=false;$('play').textContent='▶ Start heat transfer';let gap=warmT-coolT,change=Math.sign(gap)*Math.min(Math.abs(gap)*.12,5);warmT-=change;coolT+=change*.82;particles.forEach(p=>{p.x+=p.vx*4;p.y+=p.vy*4;if(p.x<90||p.x>677)p.vx*=-1;if(p.y<110||p.y>304)p.vy*=-1;});updateLabels();draw();$('status').textContent='One step completed';});
+$('reset').addEventListener('click',()=>{running=false;$('play').textContent='▶ Start heat transfer';settings();});
+['warm','cool','count','rate'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='warm'||id==='cool')settings();else{updateLabels();if(id==='count')makeParticles();draw();}}));
+$('observe').addEventListener('click',()=>{snapshotCount++;$('snapshot').textContent='Snapshot '+snapshotCount+': warm object '+Math.round(warmT)+'°C; cool object '+Math.round(coolT)+'°C; temperature difference '+Math.round(Math.abs(warmT-coolT))+'°C; energy transfer direction: '+(Math.abs(warmT-coolT)<1?'nearly balanced':warmT>coolT?'warm to cool':'cool to warm')+'.';});
+$('save').addEventListener('click',()=>{$('saveMsg').textContent='Use the print dialog to save your completed lab as a PDF.';window.print();});
+$('clear').addEventListener('click',()=>{['obsBefore','obsDuring','q1','q2','q3'].forEach(id=>$(id).value='');$('saveMsg').textContent='Written answers cleared.';});
+$('check').addEventListener('click',()=>{let answers={mc1:'b',mc2:'a',mc3:'b'},score=0,done=0;Object.keys(answers).forEach(k=>{if($(k).value){done++;if($(k).value===answers[k])score++;}});$('quizFeedback').textContent=done<3?'Please answer all three questions before checking.':'You got '+score+' out of 3 correct.';});
+settings();
+})();
+</script>
+</body>
+</html>
